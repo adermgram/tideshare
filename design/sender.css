@@ -7,7 +7,7 @@
 
 body {
     /* background: linear-gradient(to bottom, #3a3a3a, #1f1f1f); */
-    background-image: url("./figma/landing_page_background.png");
+    /* background-image: url("./figma/landing_page_background.png"); */
     color: #fff;
     /* flex-direction: column;
     justify-content: center;
@@ -124,4 +124,14 @@ footer {
         width: 60%;
         margin-top: 10px;
     }
+}
+
+
+.home-btn {
+    background-color: #f05423;
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
 }
