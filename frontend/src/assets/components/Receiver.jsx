@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import flashImage from "../images/flash-image.png";
+import mime from 'mime-types'
 
 function Receiver() {
   const [downloadCode, setDownloadCode] = useState("");
@@ -11,6 +12,7 @@ function Receiver() {
     setErrorMessage(""); // Clear error message on input change
   };
 
+
   const handleDownload = async (event) => {
     event.preventDefault();
     try {
@@ -20,12 +22,15 @@ function Receiver() {
         { responseType: "blob" }
       );
 
+
+
       const contentDisposition = response.headers["content-disposition"];
       const filenameMatch =
-        contentDisposition && contentDisposition.match(/filename="?([^"]+)"?/);
+      contentDisposition && contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\r\n]+)/i);
       const filename = filenameMatch
         ? decodeURIComponent(filenameMatch[1])
-        : "downloaded-file";
+        : `downloaded-file.${mime.extension(response.headers["content-type"]) || "bin"}`;
+    
 
       const mimeType =
         response.headers["content-type"] || "application/octet-stream";
@@ -75,7 +80,7 @@ function Receiver() {
           minLength="6"
           maxLength="6"
         />
-        <button type="submit" className="download-btn">
+        <button type="submit" className="download-btn btn">
           Download <span class="arrow">→</span>
         </button>
       </form>

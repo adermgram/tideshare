@@ -75,7 +75,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
         cache.set(fileID, { path: encryptedFilePath, password, iv, originalFileName, downloadCode });
 
         // Generate QR code for direct download URL
-        const downloadUrl = `http://localhost/download/${fileID}`;
+        const downloadUrl = `http://10.1.42.103:3000/download/${fileID}`;
         QRCode.toDataURL(downloadUrl, (err, qrCodeUrl) => {
             if (err) {
                 return res.status(501).send({message:"Error generating code"});
