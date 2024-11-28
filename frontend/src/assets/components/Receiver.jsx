@@ -17,7 +17,7 @@ function Receiver() {
     event.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:3000/download-by-code",
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/download-by-code`,
         { code: downloadCode },
         { responseType: "blob" }
       );

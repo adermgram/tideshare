@@ -28,7 +28,7 @@ function App() {
     formData.append("file", selectedFile);
 
     try {
-      const response = await axios.post("http://localhost:3000/upload", formData, {
+      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
