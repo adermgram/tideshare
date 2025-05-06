@@ -94,10 +94,112 @@ app.get('/download/:fileID', async (req, res, next) => {
         const fileData = cache.get(fileID);
 
         if (!fileData) {
+            // Check if the request is from a browser
+            const isBrowser = req.headers['accept']?.includes('text/html');
+            if (isBrowser) {
+                return res.status(404).send(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>File Not Found</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                margin: 0;
+                                background-color: #f5f5f5;
+                            }
+                            .error-container {
+                                text-align: center;
+                                padding: 2rem;
+                                background: white;
+                                border-radius: 10px;
+                                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                                max-width: 400px;
+                            }
+                            h1 {
+                                color: #e74c3c;
+                                margin-bottom: 1rem;
+                            }
+                            p {
+                                color: #666;
+                                margin-bottom: 1.5rem;
+                            }
+                            .icon {
+                                font-size: 48px;
+                                margin-bottom: 1rem;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="error-container">
+                            <div class="icon">⚠️</div>
+                            <h1>File Not Found</h1>
+                            <p>This file has either expired or has already been downloaded.</p>
+                            <p>Please request a new download link from the sender.</p>
+                        </div>
+                    </body>
+                    </html>
+                `);
+            }
             throw new AppError('File not found or expired', 404);
         }
 
         if (fileData.downloaded) {
+            // Check if the request is from a browser
+            const isBrowser = req.headers['accept']?.includes('text/html');
+            if (isBrowser) {
+                return res.status(400).send(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>File Already Downloaded</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                margin: 0;
+                                background-color: #f5f5f5;
+                            }
+                            .error-container {
+                                text-align: center;
+                                padding: 2rem;
+                                background: white;
+                                border-radius: 10px;
+                                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                                max-width: 400px;
+                            }
+                            h1 {
+                                color: #e74c3c;
+                                margin-bottom: 1rem;
+                            }
+                            p {
+                                color: #666;
+                                margin-bottom: 1.5rem;
+                            }
+                            .icon {
+                                font-size: 48px;
+                                margin-bottom: 1rem;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="error-container">
+                            <div class="icon">⚠️</div>
+                            <h1>File Already Downloaded</h1>
+                            <p>This file has already been downloaded and is no longer available.</p>
+                            <p>Please request a new download link from the sender.</p>
+                        </div>
+                    </body>
+                    </html>
+                `);
+            }
             throw new AppError('This file has already been downloaded', 400);
         }
 
@@ -107,15 +209,19 @@ app.get('/download/:fileID', async (req, res, next) => {
             fileData.iv
         );
 
-        const mimeType = mime.lookup(fileData.originalFileName) || 'application/octet-stream';
+        // Get the file extension and MIME type
+        const fileExtension = path.extname(fileData.originalFileName).toLowerCase();
+        const mimeType = mime.lookup(fileExtension) || 'application/octet-stream';
         const fileSize = fs.statSync(decryptedFilePath).size;
 
+        // Set headers
         res.setHeader('Content-Type', mimeType);
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileData.originalFileName)}"`);
+        res.setHeader('Content-Disposition', `attachment; filename="${fileData.originalFileName}"`);
         res.setHeader('Content-Length', fileSize);
-        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
 
-        const fileStream = fs.createReadStream(decryptedFilePath, { encoding: null });
+        // Stream the file
+        const fileStream = fs.createReadStream(decryptedFilePath);
         fileStream.pipe(res);
 
         fileStream.on('end', async () => {
@@ -125,6 +231,7 @@ app.get('/download/:fileID', async (req, res, next) => {
         });
 
         fileStream.on('error', (err) => {
+            console.error('Stream error:', err);
             next(new AppError('Error streaming file', 500));
         });
     } catch (error) {
@@ -155,15 +262,19 @@ app.post('/download-by-code', validateDownloadCode, async (req, res, next) => {
             fileData.iv
         );
 
-        const mimeType = mime.lookup(fileData.originalFileName) || 'application/octet-stream';
+        // Get the file extension and MIME type
+        const fileExtension = path.extname(fileData.originalFileName).toLowerCase();
+        const mimeType = mime.lookup(fileExtension) || 'application/octet-stream';
         const fileSize = fs.statSync(decryptedFilePath).size;
 
+        // Set headers
         res.setHeader('Content-Type', mimeType);
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileData.originalFileName)}"`);
+        res.setHeader('Content-Disposition', `attachment; filename="${fileData.originalFileName}"`);
         res.setHeader('Content-Length', fileSize);
-        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
 
-        const fileStream = fs.createReadStream(decryptedFilePath, { encoding: null });
+        // Stream the file
+        const fileStream = fs.createReadStream(decryptedFilePath);
         fileStream.pipe(res);
 
         fileStream.on('end', async () => {
@@ -173,9 +284,11 @@ app.post('/download-by-code', validateDownloadCode, async (req, res, next) => {
         });
 
         fileStream.on('error', (err) => {
+            console.error('Stream error:', err);
             next(new AppError('Error streaming file', 500));
         });
     } catch (error) {
+        console.error('Download error:', error);
         next(error);
     }
 });

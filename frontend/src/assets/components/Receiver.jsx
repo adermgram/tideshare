@@ -42,13 +42,52 @@ function Receiver() {
         }
       );
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      console.log('Response headers:', response.headers);
+      console.log('Content-Type:', response.headers['content-type']);
+      console.log('Content-Disposition:', response.headers['content-disposition']);
+
+      // Get the filename from the Content-Disposition header or use a default
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'downloaded-file';
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // If no filename was found, try to determine it from the content type
+      if (filename === 'downloaded-file') {
+        const contentType = response.headers['content-type'];
+        const extension = contentType.split('/')[1];
+        if (extension) {
+          filename = `downloaded-file.${extension}`;
+        }
+      }
+
+      console.log('Using filename:', filename);
+
+      // Create blob with the correct type
+      const contentType = response.headers['content-type'];
+      console.log('Creating blob with type:', contentType);
+      const blob = new Blob([response.data], { type: contentType });
+      
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
       const link = document.createElement('a');
+      link.style.display = 'none';
       link.href = url;
-      link.setAttribute('download', response.headers['content-disposition']?.split('filename=')[1] || 'downloaded-file');
+      link.download = filename;
+      
+      // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      
+      // Clean up
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
       setSuccessMessage('File downloaded successfully!');
