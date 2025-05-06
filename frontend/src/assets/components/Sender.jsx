@@ -3,6 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import QrImage from "./QrImage";
 import plusImage from "../images/plus-symbol.png";
+import config from '../../config';
 
 function Sender() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -26,11 +27,10 @@ function Sender() {
     }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!selectedFile) {
-      setError("Please select a file first");
+      setError('Please select a file first');
       return;
     }
 
@@ -39,39 +39,22 @@ function Sender() {
     setUploadProgress(0);
 
     const formData = new FormData();
-    formData.append("file", selectedFile);
+    formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/upload`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          onUploadProgress: (progressEvent) => {
-            const progress = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-            setUploadProgress(progress);
-          },
+      const response = await axios.post(`${config.apiUrl}/upload`, formData, {
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(progress);
         }
-      );
-
-      setQrData({
-        downloadCode: response.data.downloadCode,
-        qrCodeUrl: response.data.qrCodeUrl,
       });
+
+      setQrData(response.data);
       setSelectedFile(null);
-      event.target.reset();
     } catch (error) {
-      console.error("Error uploading file:", error);
-      setError(
-        error.response?.data?.message || "Error uploading file. Please try again."
-      );
+      setError(error.response?.data?.message || 'Error uploading file');
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 

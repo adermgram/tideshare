@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import flashImage from "../images/flash-image.png";
 import mime from 'mime-types'
+import config from '../../config';
 
 function Receiver() {
   const [downloadCode, setDownloadCode] = useState("");
@@ -17,67 +18,51 @@ function Receiver() {
     setSuccessMessage("");
   };
 
-  const handleDownload = async (event) => {
-    event.preventDefault();
-    if (downloadCode.length !== 6) {
-      setErrorMessage("Please enter a valid 6-digit code");
+  const handleDownload = async (e) => {
+    e.preventDefault();
+    if (!downloadCode) {
+      setErrorMessage('Please enter a download code');
       return;
     }
 
     setIsDownloading(true);
-    setErrorMessage("");
-    setSuccessMessage("");
+    setErrorMessage(null);
     setDownloadProgress(0);
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/download-by-code`,
+        `${config.apiUrl}/download-by-code`,
         { code: downloadCode },
         {
-          responseType: "blob",
+          responseType: 'blob',
           onDownloadProgress: (progressEvent) => {
-            const progress = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             setDownloadProgress(progress);
-          },
+          }
         }
       );
 
-      const contentDisposition = response.headers["content-disposition"];
-      const filenameMatch =
-        contentDisposition && contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\r\n]+)/i);
-      const filename = filenameMatch
-        ? decodeURIComponent(filenameMatch[1])
-        : `downloaded-file.${mime.extension(response.headers["content-type"]) || "bin"}`;
-
-      const mimeType = response.headers["content-type"] || "application/octet-stream";
-      const blob = new Blob([response.data], { type: mimeType });
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
       link.href = url;
-      link.download = filename;
+      link.setAttribute('download', response.headers['content-disposition']?.split('filename=')[1] || 'downloaded-file');
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
       window.URL.revokeObjectURL(url);
 
-      setSuccessMessage("File downloaded successfully!");
-      setDownloadCode("");
+      setSuccessMessage('File downloaded successfully!');
+      setDownloadCode('');
     } catch (error) {
-      console.error("Download error:", error);
-
       if (error.response?.status === 404) {
-        setErrorMessage("Invalid or expired code.");
+        setErrorMessage('Invalid download code');
       } else if (error.response?.status === 400) {
-        setErrorMessage("This file has already been downloaded.");
+        setErrorMessage('File has already been downloaded');
       } else {
-        setErrorMessage("Error downloading the file. Please try again.");
+        setErrorMessage('Error downloading file');
       }
     } finally {
       setIsDownloading(false);
-      setDownloadProgress(0);
     }
   };
 
