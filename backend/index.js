@@ -21,7 +21,7 @@ const cache = new NodeCache({ stdTTL: config.cache.ttl });
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cors({
-    origin: ['https://tideshare-f3ewc4e2b-adermgrams-projects.vercel.app', 'http://localhost:5173'],
+    origin: ['https://tideshare-adermgrams-projects.vercel.app', 'http://localhost:5173'],
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true

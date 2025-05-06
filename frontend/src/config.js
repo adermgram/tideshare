@@ -3,8 +3,9 @@ const config = {
     apiUrl: 'http://localhost:3000'
   },
   production: {
-    apiUrl: process.env.VITE_API_URL || 'https://your-backend-url.onrender.com'
+    apiUrl: import.meta.env.VITE_API_URL
   }
 };
 
+console.log('API URL:', import.meta.env.VITE_API_URL);
 export default config[import.meta.env.MODE || 'development']; 
