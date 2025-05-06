@@ -41,7 +41,8 @@ const upload = multer({
     dest: config.uploads.directory,
     limits: {
         fileSize: config.security.maxFileSize
-    }
+    },
+    preservePath: true
 });
 
 // Ensure uploads directory exists
@@ -107,10 +108,14 @@ app.get('/download/:fileID', async (req, res, next) => {
         );
 
         const mimeType = mime.lookup(fileData.originalFileName) || 'application/octet-stream';
-        res.setHeader('Content-Type', mimeType);
-        res.setHeader('Content-Disposition', `attachment; filename="${fileData.originalFileName}"`);
+        const fileSize = fs.statSync(decryptedFilePath).size;
 
-        const fileStream = fs.createReadStream(decryptedFilePath);
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileData.originalFileName)}"`);
+        res.setHeader('Content-Length', fileSize);
+        res.setHeader('Accept-Ranges', 'bytes');
+
+        const fileStream = fs.createReadStream(decryptedFilePath, { encoding: null });
         fileStream.pipe(res);
 
         fileStream.on('end', async () => {
@@ -158,7 +163,7 @@ app.post('/download-by-code', validateDownloadCode, async (req, res, next) => {
         res.setHeader('Content-Length', fileSize);
         res.setHeader('Accept-Ranges', 'bytes');
 
-        const fileStream = fs.createReadStream(decryptedFilePath);
+        const fileStream = fs.createReadStream(decryptedFilePath, { encoding: null });
         fileStream.pipe(res);
 
         fileStream.on('end', async () => {

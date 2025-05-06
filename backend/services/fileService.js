@@ -14,8 +14,8 @@ export class FileService {
             const iv = crypto.randomBytes(16);
 
             const cipher = crypto.createCipheriv(algorithm, key, iv);
-            const input = fs.createReadStream(filePath);
-            const output = fs.createWriteStream(filePath + '.enc');
+            const input = fs.createReadStream(filePath, { encoding: null });
+            const output = fs.createWriteStream(filePath + '.enc', { encoding: null });
 
             await pipeline(input, cipher, output);
 
@@ -35,8 +35,8 @@ export class FileService {
             const iv = Buffer.from(ivHex, 'hex');
 
             const decipher = crypto.createDecipheriv(algorithm, key, iv);
-            const input = fs.createReadStream(encryptedPath);
-            const output = fs.createWriteStream(encryptedPath.replace('.enc', ''));
+            const input = fs.createReadStream(encryptedPath, { encoding: null });
+            const output = fs.createWriteStream(encryptedPath.replace('.enc', ''), { encoding: null });
 
             await pipeline(input, decipher, output);
 
